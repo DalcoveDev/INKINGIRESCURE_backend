@@ -1,0 +1,269 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum UserRole {
+  USER
+  RESPONDER
+  ADMIN
+}
+
+enum EmergencyType {
+  ACCIDENT
+  FIRE
+  MEDICAL
+  FLOOD
+  QUAKE
+  ROBBERY
+  ASSAULT
+  OTHER
+}
+
+enum EmergencyStatus {
+  PENDING
+  ASSIGNED
+  IN_PROGRESS
+  RESOLVED
+  CANCELLED
+}
+
+enum EmergencyPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum ResponderStatus {
+  AVAILABLE
+  BUSY
+  OFFLINE
+}
+
+// Models
+model User {
+  id               String    @id @default(uuid())
+  email            String    @unique
+  password         String
+  firstName        String
+  lastName         String
+  phoneNumber      String    @unique
+  nationalId       String?   @unique
+  profileImageUrl  String?
+  address          String?
+  latitude         Float?
+  longitude        Float?
+  role             UserRole  @default(USER)
+  isVerified       Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  // Relations
+  emergencies   Emergency[]
+  responder     Responder?
+  notifications Notification[]
+  posts         Post[]
+  comments      Comment[]
+  likes         Like[]
+  volunteers    Volunteer[]
+  pushTokens    PushToken[]
+
+  @@map("users")
+}
+
+model Responder {
+  id                String          @id @default(uuid())
+  userId            String          @unique
+  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  specialization    String          // e.g., "Paramedic", "Firefighter", "Police"
+  licenseNumber     String          @unique
+  status            ResponderStatus @default(AVAILABLE)
+  currentLatitude   Float?
+  currentLongitude  Float?
+  rating            Float           @default(0)
+  totalResponses    Int             @default(0)
+  
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  // Relations
+  emergencies       Emergency[]
+
+  @@map("responders")
+}
+
+model Emergency {
+  id                String            @id @default(uuid())
+  userId            String
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type              EmergencyType
+  priority          EmergencyPriority @default(MEDIUM)
+  status            EmergencyStatus   @default(PENDING)
+  
+  title             String
+  description       String
+  
+  latitude          Float
+  longitude         Float
+  address           String?
+  
+  responderId       String?
+  responder         Responder?        @relation(fields: [responderId], references: [id])
+  
+  estimatedArrival  DateTime?
+  resolvedAt        DateTime?
+  
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  // Relations
+  media             EmergencyMedia[]
+  updates           EmergencyUpdate[]
+  volunteers        Volunteer[]
+
+  @@map("emergencies")
+}
+
+model EmergencyMedia {
+  id            String    @id @default(uuid())
+  emergencyId   String
+  emergency     Emergency @relation(fields: [emergencyId], references: [id], onDelete: Cascade)
+  
+  mediaUrl      String
+  mediaType     String    // "image", "video", "audio"
+  
+  createdAt     DateTime  @default(now())
+
+  @@map("emergency_media")
+}
+
+model EmergencyUpdate {
+  id            String    @id @default(uuid())
+  emergencyId   String
+  emergency     Emergency @relation(fields: [emergencyId], references: [id], onDelete: Cascade)
+  
+  message       String
+  createdBy     String    // User ID or Responder ID
+  
+  createdAt     DateTime  @default(now())
+
+  @@map("emergency_updates")
+}
+
+model Notification {
+  id            String    @id @default(uuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  title         String
+  message       String
+  type          String?   // e.g., "emergency", "update", "system"
+  data          Json?     // Additional data payload
+  isRead        Boolean   @default(false)
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([isRead])
+  @@map("notifications")
+}
+
+model Post {
+  id            String    @id @default(uuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  title         String
+  content       String
+  imageUrl      String?
+  
+  isPublished   Boolean   @default(true)
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  comments      Comment[]
+  likes         Like[]
+
+  @@map("posts")
+}
+
+model Comment {
+  id            String    @id @default(uuid())
+  postId        String
+  post          Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  content       String
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("comments")
+}
+
+model Like {
+  id            String    @id @default(uuid())
+  postId        String
+  post          Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt     DateTime  @default(now())
+
+  @@unique([postId, userId])
+  @@map("likes")
+}
+
+model Volunteer {
+  id            String    @id @default(uuid())
+  emergencyId   String
+  emergency     Emergency @relation(fields: [emergencyId], references: [id], onDelete: Cascade)
+  
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  message       String?   // Optional message from volunteer
+  skills        String?   // Skills they can offer (e.g., "First Aid", "Transportation")
+  
+  isAccepted    Boolean   @default(false)
+  acceptedAt    DateTime?
+  
+  createdAt     DateTime  @default(now())
+
+  @@unique([emergencyId, userId])
+  @@map("volunteers")
+}
+
+model PushToken {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  token       String   @unique
+  deviceType  String?  // 'ios' or 'android'
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([token])
+  @@map("push_tokens")
+}
