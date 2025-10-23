@@ -284,7 +284,7 @@ const response = await axios.get('/notifications', {
 
 ---
 
-## 📝 Notes
+## Notes
 
 - Push notifications require valid Expo push tokens
 - Profile images are stored on Cloudinary (ensure credentials are configured)
@@ -293,7 +293,7 @@ const response = await axios.get('/notifications', {
 
 ---
 
-## 🔮 Future Enhancements
+## Future Enhancements
 
 - [ ] Notification preferences (allow users to opt-out of certain types)
 - [ ] Notification sound customization
