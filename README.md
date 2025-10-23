@@ -19,7 +19,7 @@
 
 ---
 
-## 🛟 Description
+## Description
 
 **INKINGI Rescue** is a backend API system designed to facilitate **emergency response coordination** — connecting **citizens, rescuers, and authorities** in real time.  
 It provides secure endpoints for reporting incidents, tracking rescue operations, managing responder profiles, and storing case records.
