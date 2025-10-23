@@ -10,6 +10,7 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { EmergencyModule } from './emergency/emergency.module';
 import { PostsModule } from './posts/posts.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { UssdModule } from './ussd/ussd.module';
 
 @Module({
   imports: [
@@ -22,14 +23,9 @@ import { NotificationsModule } from './notifications/notifications.module';
     EmergencyModule,
     PostsModule,
     NotificationsModule,
+    UssdModule,
   ],
   controllers: [AppController],
-  providers: [
-    AppService,
-    {
-      provide: APP_GUARD,
-      useClass: JwtAuthGuard,
-    },
-  ],
+  providers: [AppService],
 })
 export class AppModule {}
