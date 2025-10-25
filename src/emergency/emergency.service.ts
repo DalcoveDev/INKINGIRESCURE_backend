@@ -116,6 +116,17 @@ export class EmergencyService {
             },
           },
         },
+        media: {
+          select: {
+            id: true,
+            mediaUrl: true,
+            mediaType: true,
+            createdAt: true,
+          },
+          orderBy: {
+            createdAt: 'asc',
+          },
+        },
         volunteers: {
           include: {
             user: {

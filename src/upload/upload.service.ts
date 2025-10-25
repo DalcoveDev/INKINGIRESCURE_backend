@@ -53,6 +53,9 @@ export class UploadService {
     try {
       // Determine resource type based on file type
       const resourceType = this.getResourceType(file.mimetype);
+      
+      // Get file format/extension
+      const format = this.getFileFormat(file);
 
       // Upload to Cloudinary
       return new Promise((resolve, reject) => {
@@ -62,6 +65,7 @@ export class UploadService {
             resource_type: resourceType,
             use_filename: true,
             unique_filename: true,
+            format: format, // Explicitly set format to preserve extension
           },
           (error, result) => {
             if (error) {
@@ -116,9 +120,48 @@ export class UploadService {
     return 'raw'; // For audio and other files
   }
 
+  private getFileFormat(file: Express.Multer.File): string {
+    // Try to get extension from original filename
+    if (file.originalname) {
+      const parts = file.originalname.split('.');
+      if (parts.length > 1) {
+        const ext = parts[parts.length - 1].toLowerCase();
+        // Return the extension
+        return ext;
+      }
+    }
+
+    // Fallback to mimetype mapping
+    const mimeToFormat: { [key: string]: string } = {
+      'audio/x-m4a': 'm4a',
+      'audio/m4a': 'm4a',
+      'audio/mp4': 'm4a',
+      'audio/mpeg': 'mp3',
+      'audio/mp3': 'mp3',
+      'audio/wav': 'wav',
+      'audio/ogg': 'ogg',
+      'audio/webm': 'webm',
+      'video/mp4': 'mp4',
+      'video/mpeg': 'mpeg',
+      'video/quicktime': 'mov',
+      'video/webm': 'webm',
+      'image/jpeg': 'jpg',
+      'image/png': 'png',
+      'image/gif': 'gif',
+      'image/webp': 'webp',
+    };
+
+    return mimeToFormat[file.mimetype] || 'bin';
+  }
+
   private getResourceTypeFromUrl(url: string): 'image' | 'video' | 'raw' {
     if (url.includes('/image/')) return 'image';
     if (url.includes('/video/')) return 'video';
+    if (url.includes('/raw/')) return 'raw';
+    // Check by file extension if resource type not in URL
+    if (url.match(/\.(mp3|wav|ogg|m4a|webm)$/i)) return 'raw';
+    if (url.match(/\.(mp4|mpeg|mov|avi)$/i)) return 'video';
+    if (url.match(/\.(jpg|jpeg|png|gif|webp)$/i)) return 'image';
     return 'raw';
   }
 

@@ -178,6 +178,17 @@ export class UssdService {
             phoneNumber: true,
           },
         },
+        media: {
+          select: {
+            id: true,
+            mediaUrl: true,
+            mediaType: true,
+            createdAt: true,
+          },
+          orderBy: {
+            createdAt: 'asc',
+          },
+        },
       },
     });
 
@@ -198,6 +209,17 @@ export class UssdService {
             firstName: true,
             lastName: true,
             phoneNumber: true,
+          },
+        },
+        media: {
+          select: {
+            id: true,
+            mediaUrl: true,
+            mediaType: true,
+            createdAt: true,
+          },
+          orderBy: {
+            createdAt: 'asc',
           },
         },
         updates: {
@@ -234,6 +256,17 @@ export class UssdService {
         createdAt: 'desc',
       },
       include: {
+        media: {
+          select: {
+            id: true,
+            mediaUrl: true,
+            mediaType: true,
+            createdAt: true,
+          },
+          orderBy: {
+            createdAt: 'asc',
+          },
+        },
         updates: {
           orderBy: {
             createdAt: 'desc',
